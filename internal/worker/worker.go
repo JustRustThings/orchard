@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"github.com/avast/retry-go/v4"
 	"github.com/cirruslabs/orchard/internal/worker/iokitregistry"
 	"github.com/cirruslabs/orchard/internal/worker/ondiskname"
@@ -218,6 +219,34 @@ func (worker *Worker) syncVMs(ctx context.Context) error {
 			if _, err := worker.client.VMs().Update(ctx, remoteVM); err != nil {
 				return err
 			}
+		}
+	}
+	
+	for _, vm := range worker.vmm.List() {
+		remoteVM, ok := remoteVMsIndex[vm.OnDiskName()]
+		if !ok {
+			continue
+		}
+
+		if remoteVM.NetBridged == "" || remoteVM.NetIp != nil {
+			continue
+		}
+
+		rawIP, err := vm.IPNow(ctx)
+		if err != nil {
+			// This is a normal case, maybe the VM doesn't have an IP yet.
+			continue
+		}
+
+		ip := net.ParseIP(rawIP)
+		if ip == nil {
+			worker.logger.Errorf("Failed to parse IP %s returned by tart...", rawIP)
+			continue
+		}
+
+		remoteVM.NetIp = &ip
+		if _, err := worker.client.VMs().Update(ctx, remoteVM); err != nil {
+			return err
 		}
 	}
 

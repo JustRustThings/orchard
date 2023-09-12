@@ -2,6 +2,7 @@ package v1
 
 import (
 	"time"
+	"net"
 )
 
 // Meta is a common set of fields that apply to all resources managed by the Controller.
@@ -25,6 +26,7 @@ type VM struct {
 	Memory          uint64          `json:"memory"`
 	NetSoftnet      bool            `json:"net-softnet"`
 	NetBridged      string          `json:"net-bridged"`
+	NetIp           *net.IP         `json:"net-ip"`
 	Headless        bool            `json:"headless"`
 
 	// Status field is used to track the lifecycle of the VM associated with this resource.

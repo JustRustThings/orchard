@@ -133,6 +133,11 @@ func (controller *Controller) updateVM(ctx *gin.Context) responder.Responder {
 		dbVM.Status = userVM.Status
 		dbVM.StatusMessage = userVM.StatusMessage
 
+		if userVM.NetIp != nil {
+			controller.logger.Infof("Setting NetIp of VM %s to %v", userVM.Name, userVM.NetIp)
+			dbVM.NetIp = userVM.NetIp
+		}
+
 		if err := txn.SetVM(*dbVM); err != nil {
 			controller.logger.Errorf("failed to update VM in the DB: %v", err)
 
